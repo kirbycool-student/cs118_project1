@@ -103,7 +103,7 @@ void dostuff (int sock)
    write(sock,"HTTP/1.1 200 OK\nContent-Language: en-US\nContent-Type: text/html; charset=UTF-8\n",79);
    char string[32] = "This is a test response\n"; 
    char length[12];
-   sprintf(length,"Content-Length:%d",strlen(string));
+   sprintf(length,"Content-Length:%d", (int) strlen(string));
    write(sock,length,strlen(length));
    write(sock,"\nConnection: keep-alive\n\n",25);
    write(sock, string, strlen(string));
