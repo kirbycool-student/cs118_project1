@@ -100,7 +100,13 @@ void dostuff (int sock)
    n = read(sock,buffer,BUFSIZE-1);
    if (n < 0) error("ERROR reading from socket");
    printf("Here is the message: %s\n",buffer);
-   //n = write(sock,buffer,n);
-   write(sock,"HTTP/1.1 200 OK\nContent-Language: en-US\nContent-Type: text/html; charset=UTF-8\n",96);
+   write(sock,"HTTP/1.1 200 OK\nContent-Language: en-US\nContent-Type: text/html; charset=UTF-8\n",79);
+   char string[32] = "This is a test response\n"; 
+   char length[12];
+   sprintf(length,"Content-Length:%d",strlen(string));
+   write(sock,length,strlen(length));
+   write(sock,"\nConnection: keep-alive\n\n",25);
+   write(sock, string, strlen(string));
+
    if (n < 0) error("ERROR writing to socket");
 }
