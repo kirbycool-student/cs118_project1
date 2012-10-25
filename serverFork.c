@@ -11,6 +11,7 @@
 #include <strings.h>
 #include <sys/wait.h>	/* for the waitpid() system call */
 #include <signal.h>	/* signal name macros, and the kill() prototype */
+#include <string.h>	
 
 
 void sigchld_handler(int s)
@@ -91,13 +92,15 @@ int main(int argc, char *argv[])
  *****************************************/
 void dostuff (int sock)
 {
+   #define BUFSIZE  512
    int n;
-   char buffer[256];
+   char buffer[BUFSIZE];
       
-   bzero(buffer,256);
-   n = read(sock,buffer,255);
+   bzero(buffer,BUFSIZE);
+   n = read(sock,buffer,BUFSIZE-1);
    if (n < 0) error("ERROR reading from socket");
    printf("Here is the message: %s\n",buffer);
-   n = write(sock,"I got your message",18);
+   //n = write(sock,buffer,n);
+   write(sock,"HTTP/1.1 200 OK\nContent-Language: en-US\nContent-Type: text/html; charset=UTF-8\n",96);
    if (n < 0) error("ERROR writing to socket");
 }
