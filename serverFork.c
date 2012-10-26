@@ -96,22 +96,22 @@ int main(int argc, char *argv[])
 
 void dostuff (int sock)
 {
-   #define BUFSIZE  512
-   int n;
-   char buffer[BUFSIZE];
+    #define BUFSIZE  512
+    int n;
+    char buffer[BUFSIZE];
       
-   bzero(buffer,BUFSIZE);
-   n = read(sock,buffer,BUFSIZE-1);
-   if (n < 0) error("ERROR reading from socket");
-   printf("Here is the message: %s\n",buffer);
-   printf("Here is the query: %s\n",parseRequest(buffer));
+    bzero(buffer,BUFSIZE);
+    n = read(sock,buffer,BUFSIZE-1);
+    if (n < 0) error("ERROR reading from socket");
+    printf("Here is the message: %s\n",buffer);
+    printf("Here is the query: %s\n",parseRequest(buffer));
    
     char testMessage[32] = "get paid";
     sendHeader(sock, 200, "text/html", strlen(testMessage));
 
-   write(sock, string, strlen(string));
+    write(sock, testMessage, strlen(testMessage));
 
-   if (n < 0) error("ERROR writing to socket");
+    if (n < 0) error("ERROR writing to socket");
 }
 
 void sendHeader(int sock, int status, char* contentType, int contentLength) {
@@ -153,16 +153,14 @@ void sendHeader(int sock, int status, char* contentType, int contentLength) {
 
 char * parseRequest(char * httpRequest)
 {
-    //return strstr(httpRequest,"GET");
-   //char query[BUFSIZE] = "test message"; 
-   char * substring = strstr(httpRequest,"GET");
-   char * substringEnd = strstr(substring,"HTTP");
-   char query[BUFSIZE];
-   bzero(query,BUFSIZE);
-   if (substring != NULL)
-   {
-       strncpy(query,substring,strlen(substring) - strlen(substringEnd)); 
-       return query;
-   }      
-   return substring; 
+    char * substring = strstr(httpRequest,"GET");
+    char * substringEnd = strstr(substring,"HTTP");
+    char query[BUFSIZE];
+    bzero(query,BUFSIZE);
+    if (substring != NULL)
+    {
+        strncpy(query,substring,strlen(substring) - strlen(substringEnd)); 
+        return query;
+    }      
+    return substring; 
 }
