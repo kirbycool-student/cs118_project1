@@ -19,7 +19,7 @@ void sigchld_handler(int s)
     while(waitpid(-1, NULL, WNOHANG) > 0);
 }
 
-char * parseRequest(char * httpRequest); // returns pointer to name of requested html file
+void parseRequest(char * buffer,char * httpRequest); // returns pointer to name of requested html file
 void sendHeader(int sock, int status, char* contentType, int contentLength);
 void dostuff(int); /* function prototype */
 
@@ -104,7 +104,9 @@ void dostuff (int sock)
     n = read(sock,buffer,BUFSIZE-1);
     if (n < 0) error("ERROR reading from socket");
     printf("Here is the message: %s\n",buffer);
-    printf("Here is the query: %s\n",parseRequest(buffer));
+    char file[BUFSIZE];
+    parseRequest(file,buffer);
+    printf("Here is the query: %s\n",file);
    
     char testMessage[32] = "get paid";
     sendHeader(sock, 200, "text/html", strlen(testMessage));
@@ -151,16 +153,16 @@ void sendHeader(int sock, int status, char* contentType, int contentLength) {
     write(sock,"\nConnection: keep-alive\n\n",25);
 }
 
-char * parseRequest(char * httpRequest)
+void parseRequest(char * buffer,char * httpRequest)
 {
     char * substring = strstr(httpRequest,"GET");
+    substring = &substring[3];
     char * substringEnd = strstr(substring,"HTTP");
-    char query[BUFSIZE];
-    bzero(query,BUFSIZE);
     if (substring != NULL)
     {
-        strncpy(query,substring,strlen(substring) - strlen(substringEnd)); 
-        return query;
+        int querySize = strlen(substring) - strlen(substringEnd);
+        strncpy(buffer,substring,querySize); 
+        buffer[querySize] = '\0';
     }      
-    return substring; 
+    return; 
 }
