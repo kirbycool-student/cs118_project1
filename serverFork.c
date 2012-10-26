@@ -118,15 +118,16 @@ void dostuff (int sock)
 
 char * parseRequest(char * httpRequest)
 {
-
+    //return strstr(httpRequest,"GET");
    //char query[BUFSIZE] = "test message"; 
-   char * substring = strstr(buffer,"GET /");
-   char * substringEnd = strstr(buffer,"HTTP/");
-   printf("This is the query:%s\n",substring);/* 
+   char * substring = strstr(httpRequest,"GET");
+   char * substringEnd = strstr(substring,"HTTP");
+   char query[BUFSIZE];
+   bzero(query,BUFSIZE);
    if (substring != NULL)
    {
-       strncpy(query,substring,substring - substringEnd); 
-   }       
-  */
-   //printf("This is the query:%s\n",query); 
+       strncpy(query,substring,strlen(substring) - strlen(substringEnd)); 
+       return query;
+   }      
+   return substring; 
 }
