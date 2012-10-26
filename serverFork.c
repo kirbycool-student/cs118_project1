@@ -19,7 +19,9 @@ void sigchld_handler(int s)
     while(waitpid(-1, NULL, WNOHANG) > 0);
 }
 
+void sendHeader(int sock, int status, char* contentType, int contentLength);
 void dostuff(int); /* function prototype */
+
 void error(char *msg)
 {
     perror(msg);
@@ -100,13 +102,46 @@ void dostuff (int sock)
    n = read(sock,buffer,BUFSIZE-1);
    if (n < 0) error("ERROR reading from socket");
    printf("Here is the message: %s\n",buffer);
-   write(sock,"HTTP/1.1 200 OK\nContent-Language: en-US\nContent-Type: text/html; charset=UTF-8\n",79);
-   char string[32] = "This is a test response\n"; 
-   char length[32];
-   sprintf(length,"Content-Length:%d", (int) strlen(string));
-   write(sock,length,strlen(length));
-   write(sock,"\nConnection: keep-alive\n\n",25);
+    char string[32] = "get paid";
+    sendHeader(sock, 200, "text/html", strlen(string));
    write(sock, string, strlen(string));
 
    if (n < 0) error("ERROR writing to socket");
+}
+
+void sendHeader(int sock, int status, char* contentType, int contentLength) {
+    write(sock, "HTTP/1.1 ", 9);
+
+    //status code
+    char statusString[32];
+    switch (status) {
+        case 200:
+            strcpy(statusString, "200 OK");
+            break;
+        case 404:
+            strcpy(statusString, "404 Not Found");
+            break;
+        case 500:
+        default:
+            strcpy(statusString, "500 Internal Error");
+    }
+    write(sock, statusString, (int) strlen(statusString));
+    
+    //content language
+    write(sock, "\nContent-Language: en-US\n", 1);
+    
+    //content type
+    write(sock, "Content-Type: ", 14);
+    write(sock, contentType, strlen(contentType));
+
+    //charset
+    write(sock, "; charset=UTF-8\n", 16);
+    
+    //contentLength
+    char length[32];
+    sprintf(length,"Content-Length:%d", contentLength);
+    write(sock, length, strlen(length));
+
+    //connection
+    write(sock,"\nConnection: keep-alive\n\n",25);
 }
