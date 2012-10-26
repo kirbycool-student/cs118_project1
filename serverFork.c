@@ -19,7 +19,10 @@ void sigchld_handler(int s)
     while(waitpid(-1, NULL, WNOHANG) > 0);
 }
 
+char * parseRequest(char * httpRequest); // returns pointer to name of requested html file
+void sendHeader(int sock, int status, char* contentType, int contentLength);
 void dostuff(int); /* function prototype */
+
 void error(char *msg)
 {
     perror(msg);
@@ -90,7 +93,6 @@ int main(int argc, char *argv[])
  for each connection.  It handles all communication
  once a connnection has been established.
  *****************************************/
-char * parseRequest(char * httpRequest); // returns pointer to name of requested html file
 
 void dostuff (int sock)
 {
@@ -101,19 +103,52 @@ void dostuff (int sock)
    bzero(buffer,BUFSIZE);
    n = read(sock,buffer,BUFSIZE-1);
    if (n < 0) error("ERROR reading from socket");
-   printf("Here is the query: %s\n",parseRequest(buffer));
    printf("Here is the message: %s\n",buffer);
+   printf("Here is the query: %s\n",parseRequest(buffer));
    
-   char response[BUFSIZE] = "This is a test response\n"; 
-   char length[BUFSIZE];
-   sprintf(length,"Content-Length:%d", (int) strlen(response));
+    char testMessage[32] = "get paid";
+    sendHeader(sock, 200, "text/html", strlen(testMessage));
 
-   write(sock,"HTTP/1.1 200 OK\nContent-Language: en-US\nContent-Type: text/html; charset=UTF-8\n",79);
-   write(sock,length,strlen(length));
-   write(sock,"\nConnection: keep-alive\n\n",25);
-   write(sock, response, strlen(response));
+   write(sock, string, strlen(string));
 
    if (n < 0) error("ERROR writing to socket");
+}
+
+void sendHeader(int sock, int status, char* contentType, int contentLength) {
+    write(sock, "HTTP/1.1 ", 9);
+
+    //status code
+    char statusString[32];
+    switch (status) {
+        case 200:
+            strcpy(statusString, "200 OK");
+            break;
+        case 404:
+            strcpy(statusString, "404 Not Found");
+            break;
+        case 500:
+        default:
+            strcpy(statusString, "500 Internal Error");
+    }
+    write(sock, statusString, (int) strlen(statusString));
+    
+    //content language
+    write(sock, "\nContent-Language: en-US\n", 1);
+    
+    //content type
+    write(sock, "Content-Type: ", 14);
+    write(sock, contentType, strlen(contentType));
+
+    //charset
+    write(sock, "; charset=UTF-8\n", 16);
+    
+    //contentLength
+    char length[32];
+    sprintf(length,"Content-Length:%d", contentLength);
+    write(sock, length, strlen(length));
+
+    //connection
+    write(sock,"\nConnection: keep-alive\n\n",25);
 }
 
 char * parseRequest(char * httpRequest)
