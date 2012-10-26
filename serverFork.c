@@ -107,7 +107,7 @@ void dostuff (int sock)
    printf("Here is the query: %s\n",parseRequest(buffer));
    
     char testMessage[32] = "get paid";
-    sendHeader(sock, 200, "text/html", strlen(string));
+    sendHeader(sock, 200, "text/html", strlen(testMessage));
 
    write(sock, string, strlen(string));
 
