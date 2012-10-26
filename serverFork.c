@@ -90,6 +90,8 @@ int main(int argc, char *argv[])
  for each connection.  It handles all communication
  once a connnection has been established.
  *****************************************/
+char * parseRequest(char * httpRequest); // returns pointer to name of requested html file
+
 void dostuff (int sock)
 {
    #define BUFSIZE  512
@@ -99,6 +101,7 @@ void dostuff (int sock)
    bzero(buffer,BUFSIZE);
    n = read(sock,buffer,BUFSIZE-1);
    if (n < 0) error("ERROR reading from socket");
+   printf("Here is the query: %s\n",parseRequest(buffer));
    printf("Here is the message: %s\n",buffer);
    
    char response[BUFSIZE] = "This is a test response\n"; 
@@ -113,8 +116,17 @@ void dostuff (int sock)
    if (n < 0) error("ERROR writing to socket");
 }
 
-char * parseRequest(char * httpRequest) // returns pointer to name of requested html file
+char * parseRequest(char * httpRequest)
 {
 
-
+   //char query[BUFSIZE] = "test message"; 
+   char * substring = strstr(buffer,"GET /");
+   char * substringEnd = strstr(buffer,"HTTP/");
+   printf("This is the query:%s\n",substring);/* 
+   if (substring != NULL)
+   {
+       strncpy(query,substring,substring - substringEnd); 
+   }       
+  */
+   //printf("This is the query:%s\n",query); 
 }
