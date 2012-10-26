@@ -19,6 +19,7 @@ void sigchld_handler(int s)
     while(waitpid(-1, NULL, WNOHANG) > 0);
 }
 
+char * parseRequest(char * httpRequest); // returns pointer to name of requested html file
 void sendHeader(int sock, int status, char* contentType, int contentLength);
 void dostuff(int); /* function prototype */
 
@@ -92,6 +93,7 @@ int main(int argc, char *argv[])
  for each connection.  It handles all communication
  once a connnection has been established.
  *****************************************/
+
 void dostuff (int sock)
 {
    #define BUFSIZE  512
@@ -102,8 +104,11 @@ void dostuff (int sock)
    n = read(sock,buffer,BUFSIZE-1);
    if (n < 0) error("ERROR reading from socket");
    printf("Here is the message: %s\n",buffer);
-    char string[32] = "get paid";
+   printf("Here is the query: %s\n",parseRequest(buffer));
+   
+    char testMessage[32] = "get paid";
     sendHeader(sock, 200, "text/html", strlen(string));
+
    write(sock, string, strlen(string));
 
    if (n < 0) error("ERROR writing to socket");
@@ -144,4 +149,19 @@ void sendHeader(int sock, int status, char* contentType, int contentLength) {
 
     //connection
     write(sock,"\nConnection: keep-alive\n\n",25);
+}
+
+char * parseRequest(char * httpRequest)
+{
+
+   //char query[BUFSIZE] = "test message"; 
+   char * substring = strstr(buffer,"GET /");
+   char * substringEnd = strstr(buffer,"HTTP/");
+   printf("This is the query:%s\n",substring);/* 
+   if (substring != NULL)
+   {
+       strncpy(query,substring,substring - substringEnd); 
+   }       
+  */
+   //printf("This is the query:%s\n",query); 
 }
