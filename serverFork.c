@@ -100,13 +100,21 @@ void dostuff (int sock)
    n = read(sock,buffer,BUFSIZE-1);
    if (n < 0) error("ERROR reading from socket");
    printf("Here is the message: %s\n",buffer);
+   
+   char response[BUFSIZE] = "This is a test response\n"; 
+   char length[BUFSIZE];
+   sprintf(length,"Content-Length:%d", (int) strlen(response));
+
    write(sock,"HTTP/1.1 200 OK\nContent-Language: en-US\nContent-Type: text/html; charset=UTF-8\n",79);
-   char string[32] = "This is a test response\n"; 
-   char length[32];
-   sprintf(length,"Content-Length:%d", (int) strlen(string));
    write(sock,length,strlen(length));
    write(sock,"\nConnection: keep-alive\n\n",25);
-   write(sock, string, strlen(string));
+   write(sock, response, strlen(response));
 
    if (n < 0) error("ERROR writing to socket");
+}
+
+char * parseRequest(char * httpRequest) // returns pointer to name of requested html file
+{
+
+
 }
