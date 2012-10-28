@@ -19,6 +19,7 @@ void sigchld_handler(int s)
     while(waitpid(-1, NULL, WNOHANG) > 0);
 }
 
+void contentType(char* type, char* fileName);
 void parseRequest(char * buffer,char * httpRequest); // returns pointer to name of requested html file
 void sendHeader(int sock, int status, char* contentType, int contentLength);
 void dostuff(int); /* function prototype */
@@ -96,7 +97,7 @@ int main(int argc, char *argv[])
 
 void dostuff (int sock)
 {
-    #define BUFSIZE  512
+    #define BUFSIZE  512*512
     int n;
     char buffer[BUFSIZE];
       
@@ -105,15 +106,44 @@ void dostuff (int sock)
     if (n < 0) error("ERROR reading from socket");
     printf("Here is the message: %s\n",buffer);
     char file[BUFSIZE];
+    bzero(file,BUFSIZE);
     parseRequest(file,buffer);
-    printf("Here is the query: %s\n",file);
-   
-    char testMessage[32] = "get paid";
-    sendHeader(sock, 200, "text/html", strlen(testMessage));
-
-    write(sock, testMessage, strlen(testMessage));
+    FILE * fd = fopen(file,"r");
+    char testMessage[BUFSIZE];
+    bzero(testMessage,BUFSIZE);
+    int dataLength; 
+    if (fd == NULL) 
+    { 
+        printf("failed open"); 
+    }
+    else 
+    {
+        dataLength = fread(testMessage,1,BUFSIZE,fd);
+    }
+    fclose(fd);
+    char content[BUFSIZE];
+    contentType(content,file);
+    sendHeader(sock, 200, content, dataLength);
+    write(sock, testMessage, dataLength);
 
     if (n < 0) error("ERROR writing to socket");
+}
+
+void contentType(char* type, char* fileName)
+{
+    if (strstr(fileName,".html") != NULL)
+    {
+        strcpy(type,"text/html; charset=UTF-8\n"); 
+    }
+    else if (strstr(fileName,".gif") != NULL)
+    {
+        strcpy(type,"image/gif\n"); 
+    }
+    else if (strstr(fileName,".jpeg") != NULL)
+    {
+        strcpy(type,"image/jpeg\n"); 
+    }
+    return;
 }
 
 void sendHeader(int sock, int status, char* contentType, int contentLength) {
@@ -142,10 +172,10 @@ void sendHeader(int sock, int status, char* contentType, int contentLength) {
     write(sock, contentType, strlen(contentType));
 
     //charset
-    write(sock, "; charset=UTF-8\n", 16);
+    //write(sock, "; charset=UTF-8\n", 16);
     
     //contentLength
-    char length[32];
+    char length[BUFSIZE];
     sprintf(length,"Content-Length:%d", contentLength);
     write(sock, length, strlen(length));
 
@@ -155,12 +185,12 @@ void sendHeader(int sock, int status, char* contentType, int contentLength) {
 
 void parseRequest(char * buffer,char * httpRequest)
 {
-    char * substring = strstr(httpRequest,"GET");
-    substring = &substring[3];
-    char * substringEnd = strstr(substring,"HTTP");
+    char * substring = strstr(httpRequest,"GET /");
     if (substring != NULL)
     {
-        int querySize = strlen(substring) - strlen(substringEnd);
+        char * substringEnd = strstr(substring,"HTTP");
+        substring = &substring[5];
+        int querySize = strlen(substring) - strlen(substringEnd) - 1;
         strncpy(buffer,substring,querySize); 
         buffer[querySize] = '\0';
     }      
