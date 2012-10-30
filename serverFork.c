@@ -19,6 +19,7 @@ void sigchld_handler(int s)
     while(waitpid(-1, NULL, WNOHANG) > 0);
 }
 
+void sendFile(int sock, FILE * fd);
 void contentType(char* type, char* fileName);
 void parseRequest(char * buffer,char * httpRequest); // returns pointer to name of requested html file
 void sendHeader(int sock, int status, char* contentType, int contentLength);
@@ -97,7 +98,7 @@ int main(int argc, char *argv[])
 
 void dostuff (int sock)
 {
-    #define BUFSIZE  512*512
+    #define BUFSIZE  512
     int n;
     char buffer[BUFSIZE];
       
@@ -107,24 +108,37 @@ void dostuff (int sock)
     printf("Here is the message: %s\n",buffer);
     char file[BUFSIZE];
     bzero(file,BUFSIZE);
+
     parseRequest(file,buffer);
+
     FILE * fd = fopen(file,"r");
+    
     char testMessage[BUFSIZE];
     bzero(testMessage,BUFSIZE);
+
     int dataLength; 
+    
     if (fd == NULL) 
-    { 
-        printf("failed open"); 
+    {
+        sendHeader(sock, 404, "text/html", 0);
+        printf("failed open file '%s'", file); 
     }
     else 
     {
-        dataLength = fread(testMessage,1,BUFSIZE,fd);
+        //find file length
+        fseek(fd, 0L, SEEK_END);
+        dataLength = ftell(fd);
+        fseek(fd, 0L, SEEK_SET); //set back to beginning
+        
+        char content[BUFSIZE];
+        contentType(content,file);
+
+        sendHeader(sock, 200, content, dataLength);
+
+        sendFile(sock, fd);
+        
+        fclose(fd);
     }
-    fclose(fd);
-    char content[BUFSIZE];
-    contentType(content,file);
-    sendHeader(sock, 200, content, dataLength);
-    write(sock, testMessage, dataLength);
 
     if (n < 0) error("ERROR writing to socket");
 }
@@ -196,3 +210,15 @@ void parseRequest(char * buffer,char * httpRequest)
     }      
     return; 
 }
+
+void sendFile(int sock, FILE * fd) {
+    char buffer[BUFSIZE];
+    long int dataLength;
+    while( dataLength = fread(buffer, 1, BUFSIZE, fd) ) {
+        printf("sending a data chunk\n");
+        write(sock, buffer, dataLength);
+    }
+    if(ferror(fd)) { //read error
+        fprintf(stderr, "read error\n");
+    }
+} 
