@@ -1,8 +1,3 @@
-/* A simple server in the internet domain using TCP
-   The port number is passed as an argument 
-   This version runs forever, forking off a separate 
-   process for each connection
-*/
 #include <stdio.h>
 #include <sys/types.h>   // definitions of a number of data types used in socket.h and netinet/in.h
 #include <sys/socket.h>  // definitions of structures needed for sockets, e.g. sockaddr
@@ -21,9 +16,9 @@ void sigchld_handler(int s)
 
 void sendFile(int sock, FILE * fd);
 void contentType(char* type, char* fileName);
-void parseRequest(char * buffer,char * httpRequest); // returns pointer to name of requested html file
+void parseRequest(char * buffer,char * httpRequest); 
 void sendHeader(int sock, int status, char* contentType, int contentLength);
-void dostuff(int); /* function prototype */
+void dostuff(int); 
 
 void error(char *msg)
 {
@@ -98,32 +93,35 @@ int main(int argc, char *argv[])
 
 void dostuff (int sock)
 {
-    #define BUFSIZE  512
+    #define BUFSIZE  512*512    //arbitrary size
     int n;
     char buffer[BUFSIZE];
-      
+     
+    // read in HTTP request 
     bzero(buffer,BUFSIZE);
     n = read(sock,buffer,BUFSIZE-1);
     if (n < 0) error("ERROR reading from socket");
+    
+    // dump request to console
     printf("Here is the message: %s\n",buffer);
     char file[BUFSIZE];
     bzero(file,BUFSIZE);
 
+    // get name of requested file
     parseRequest(file,buffer);
 
-    FILE * fd = fopen(file,"r");
-    
     char testMessage[BUFSIZE];
     bzero(testMessage,BUFSIZE);
-
     int dataLength; 
     
-    if (fd == NULL) 
+    FILE * fd = fopen(file,"r");
+
+    if (fd == NULL) // open failed 
     {
         sendHeader(sock, 404, "text/html", 0);
         printf("failed open file '%s'", file); 
     }
-    else 
+    else // send header and file
     {
         //find file length
         fseek(fd, 0L, SEEK_END);
@@ -133,8 +131,8 @@ void dostuff (int sock)
         char content[BUFSIZE];
         contentType(content,file);
 
+        // send all info
         sendHeader(sock, 200, content, dataLength);
-
         sendFile(sock, fd);
         
         fclose(fd);
@@ -145,6 +143,9 @@ void dostuff (int sock)
 
 void contentType(char* type, char* fileName)
 {
+    // only implemented 3 recognized file types
+    // other types can be requested,
+    // but won't be dealt with in HTTP
     if (strstr(fileName,".html") != NULL)
     {
         strcpy(type,"text/html; charset=UTF-8\n"); 
@@ -199,9 +200,11 @@ void sendHeader(int sock, int status, char* contentType, int contentLength) {
 
 void parseRequest(char * buffer,char * httpRequest)
 {
+    // filename immediately follows GET
     char * substring = strstr(httpRequest,"GET /");
     if (substring != NULL)
     {
+        //filename precedes HTTP
         char * substringEnd = strstr(substring,"HTTP");
         substring = &substring[5];
         int querySize = strlen(substring) - strlen(substringEnd) - 1;
@@ -214,8 +217,8 @@ void parseRequest(char * buffer,char * httpRequest)
 void sendFile(int sock, FILE * fd) {
     char buffer[BUFSIZE];
     long int dataLength;
+    // iterate over data and send in chunks
     while( dataLength = fread(buffer, 1, BUFSIZE, fd) ) {
-        printf("sending a data chunk\n");
         write(sock, buffer, dataLength);
     }
     if(ferror(fd)) { //read error
